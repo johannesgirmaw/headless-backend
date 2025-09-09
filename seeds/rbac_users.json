@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "description": "Seed users mapped to roles, groups, and direct permissions. Use with the RBAC Postman collection.",
+    "version": "1.0.0",
+    "notes": "Set base variables in Postman: baseUrl, adminEmail, adminPassword, accountId, organizationId."
+  },
+  "users": [
+    {
+      "email": "saas.admin@example.com",
+      "password": "Admin!234",
+      "first_name": "SaaS",
+      "last_name": "Administrator",
+      "roles": [{ "type": "system", "codename": "saas_administrator" }],
+      "groups": [],
+      "direct_permissions": []
+    },
+    {
+      "email": "account.manager@example.com",
+      "password": "Manager!234",
+      "first_name": "Account",
+      "last_name": "Manager",
+      "roles": [{ "type": "system", "codename": "saas_account_manager" }],
+      "groups": [],
+      "direct_permissions": []
+    },
+    {
+      "email": "org.admin@example.com",
+      "password": "OrgAdmin!234",
+      "first_name": "Organization",
+      "last_name": "Admin",
+      "roles": [
+        {
+          "type": "system",
+          "codename": "organization_administrator",
+          "organization": "{{organizationId}}"
+        }
+      ],
+      "groups": [],
+      "direct_permissions": []
+    },
+    {
+      "email": "team.manager@example.com",
+      "password": "TeamMgr!234",
+      "first_name": "Team",
+      "last_name": "Manager",
+      "roles": [
+        {
+          "type": "system",
+          "codename": "team_manager",
+          "organization": "{{organizationId}}"
+        }
+      ],
+      "groups": [{ "name": "Support", "organization": "{{organizationId}}" }],
+      "direct_permissions": []
+    },
+    {
+      "email": "user.basic@example.com",
+      "password": "User!234",
+      "first_name": "Basic",
+      "last_name": "User",
+      "roles": [
+        {
+          "type": "system",
+          "codename": "user",
+          "organization": "{{organizationId}}"
+        }
+      ],
+      "groups": [],
+      "direct_permissions": []
+    },
+    {
+      "email": "catalog.manager@example.com",
+      "password": "Catalog!234",
+      "first_name": "Catalog",
+      "last_name": "Manager",
+      "roles": [
+        {
+          "type": "custom",
+          "name": "Catalog Manager",
+          "codename": "catalog_manager",
+          "organization": "{{organizationId}}",
+          "description": "Manages knowledge base catalogs and resources",
+          "permissions": [
+            "users_read",
+            "teams_read",
+            "roles_read",
+            "permissions_read",
+            "subscriptions_read"
+          ]
+        }
+      ],
+      "groups": [],
+      "direct_permissions": [
+        { "codename": "users_update", "organization": "{{organizationId}}" }
+      ]
+    },
+    {
+      "email": "integration.manager@example.com",
+      "password": "Integrate!234",
+      "first_name": "Integration",
+      "last_name": "Manager",
+      "roles": [
+        {
+          "type": "custom",
+          "name": "Integration Manager",
+          "codename": "integration_manager",
+          "organization": "{{organizationId}}",
+          "description": "Manages integrations and webhooks",
+          "permissions": [
+            "users_read",
+            "teams_read",
+            "roles_read",
+            "permissions_read",
+            "organizations_update"
+          ]
+        }
+      ],
+      "groups": [
+        { "name": "Integrations", "organization": "{{organizationId}}" }
+      ],
+      "direct_permissions": [
+        { "codename": "roles_update", "organization": "{{organizationId}}" },
+        {
+          "codename": "permissions_update",
+          "organization": "{{organizationId}}"
+        }
+      ]
+    }
+  ]
+}
