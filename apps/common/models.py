@@ -7,6 +7,9 @@ from django.db import models
 from django.utils import timezone
 import uuid
 
+# Import RBAC models
+from .rbac_models import *
+
 
 class SoftDeleteManager(models.Manager):
     """Manager that excludes soft-deleted objects by default."""

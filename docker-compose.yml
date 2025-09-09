@@ -44,7 +44,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=False
+      - DEBUG=True
       - SECRET_KEY=your-super-secret-key-change-in-production
       - DATABASE_URL=postgresql://postgres:postgres_password@db:5432/headless_backend_db
       - REDIS_URL=redis://redis:6379/0
