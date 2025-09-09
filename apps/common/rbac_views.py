@@ -37,18 +37,16 @@ class PermissionViewSet(viewsets.ModelViewSet):
         return PermissionSerializer
 
     def get_permissions(self):
-        """Set required permissions based on action."""
+        """Return instantiated permissions, not classes with parameters."""
         if self.action in ['list', 'retrieve']:
-            self.permission_classes = [
-                IsAuthenticated, RBACPermission(['permissions_read'])]
+            return [IsAuthenticated(), RBACPermission(['permissions_read'])]
         elif self.action in ['create', 'update', 'partial_update']:
-            self.permission_classes = [IsAuthenticated, RBACPermission(
-                ['permissions_create', 'permissions_update'])]
+            return [IsAuthenticated(), RBACPermission([
+                'permissions_create', 'permissions_update'
+            ])]
         elif self.action == 'destroy':
-            self.permission_classes = [IsAuthenticated,
-                                       RBACPermission(['permissions_delete'])]
-
-        return super().get_permissions()
+            return [IsAuthenticated(), RBACPermission(['permissions_delete'])]
+        return [perm() for perm in self.permission_classes]
 
     def get_queryset(self):
         """Filter permissions by model if specified."""
@@ -71,18 +69,16 @@ class RoleViewSet(viewsets.ModelViewSet):
         return RoleSerializer
 
     def get_permissions(self):
-        """Set required permissions based on action."""
+        """Return instantiated permissions for organization-scoped checks."""
         if self.action in ['list', 'retrieve']:
-            self.permission_classes = [IsAuthenticated,
-                                       OrganizationPermission(['roles_read'])]
+            return [IsAuthenticated(), OrganizationPermission(['roles_read'])]
         elif self.action in ['create', 'update', 'partial_update']:
-            self.permission_classes = [IsAuthenticated, OrganizationPermission(
-                ['roles_create', 'roles_update'])]
+            return [IsAuthenticated(), OrganizationPermission([
+                'roles_create', 'roles_update'
+            ])]
         elif self.action == 'destroy':
-            self.permission_classes = [IsAuthenticated,
-                                       OrganizationPermission(['roles_delete'])]
-
-        return super().get_permissions()
+            return [IsAuthenticated(), OrganizationPermission(['roles_delete'])]
+        return [perm() for perm in self.permission_classes]
 
     def get_queryset(self):
         """Filter roles by organization."""
@@ -120,7 +116,7 @@ class RoleViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['get'], url_path='permissions')
-    def get_permissions(self, request, pk=None, organization_id=None):
+    def list_role_permissions(self, request, pk=None, organization_id=None):
         """Get permissions assigned to a role."""
         role = self.get_object()
         permissions = role.role_permissions.filter(permission__is_active=True)
@@ -140,18 +136,16 @@ class UserGroupViewSet(viewsets.ModelViewSet):
         return UserGroupSerializer
 
     def get_permissions(self):
-        """Set required permissions based on action."""
+        """Return instantiated permissions for organization-scoped checks."""
         if self.action in ['list', 'retrieve']:
-            self.permission_classes = [IsAuthenticated,
-                                       OrganizationPermission(['groups_read'])]
+            return [IsAuthenticated(), OrganizationPermission(['groups_read'])]
         elif self.action in ['create', 'update', 'partial_update']:
-            self.permission_classes = [IsAuthenticated, OrganizationPermission(
-                ['groups_create', 'groups_update'])]
+            return [IsAuthenticated(), OrganizationPermission([
+                'groups_create', 'groups_update'
+            ])]
         elif self.action == 'destroy':
-            self.permission_classes = [IsAuthenticated,
-                                       OrganizationPermission(['groups_delete'])]
-
-        return super().get_permissions()
+            return [IsAuthenticated(), OrganizationPermission(['groups_delete'])]
+        return [perm() for perm in self.permission_classes]
 
     def get_queryset(self):
         """Filter groups by organization."""
@@ -249,8 +243,10 @@ class UserRBACViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserRBACSerializer
-    permission_classes = [IsAuthenticated,
-                          OrganizationPermission(['users_read'])]
+    permission_classes = [IsAuthenticated, OrganizationPermission]
+
+    def get_permissions(self):
+        return [IsAuthenticated(), OrganizationPermission(['users_read'])]
 
     def get_queryset(self):
         """Filter users by organization."""
@@ -365,10 +361,13 @@ class SystemRoleViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Role.objects.filter(is_active=True, role_type='system')
     serializer_class = RoleListSerializer
-    permission_classes = [IsAuthenticated, RBACPermission(['roles_read'])]
+    permission_classes = [IsAuthenticated, RBACPermission]
+
+    def get_permissions(self):
+        return [IsAuthenticated(), RBACPermission(['roles_read'])]
 
     @action(detail=True, methods=['get'], url_path='permissions')
-    def get_permissions(self, request, pk=None):
+    def list_role_permissions(self, request, pk=None):
         """Get permissions assigned to a system role."""
         role = self.get_object()
         permissions = role.role_permissions.filter(permission__is_active=True)

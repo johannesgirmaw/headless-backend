@@ -222,10 +222,10 @@ yarn-error.log*
 *.backup
 *.old
 
-# Test files
-test_*.py
-*_test.py
-tests/
+# # Test files
+# test_*.py
+# *_test.py
+# tests/
 
 # Development files (keep setup scripts, exclude env files)
 env.dev

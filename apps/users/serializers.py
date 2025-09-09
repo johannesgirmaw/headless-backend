@@ -174,7 +174,7 @@ class UserUpdateSerializer(UserSerializer):
         write_only=True, min_length=8, required=False)
 
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields
+        fields = UserSerializer.Meta.fields + ['password']
         read_only_fields = UserSerializer.Meta.read_only_fields + [
             'user_id',  # User ID cannot be changed after creation
             'email',    # Email cannot be changed after creation

@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from django.utils.deprecation import MiddlewareMixin
 from django.conf import settings
-from django.core.exceptions import Throttled
+from rest_framework.exceptions import Throttled
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework.response import Response
 from rest_framework import status
@@ -32,8 +32,9 @@ class CustomRateThrottle(UserRateThrottle):
         """
         Generate cache key for rate limiting.
         """
-        if request.user and request.user.is_authenticated:
-            ident = request.user.pk
+        user = getattr(request, 'user', None)
+        if user is not None and getattr(user, 'is_authenticated', False):
+            ident = user.pk
         else:
             ident = self.get_ident(request)
 
