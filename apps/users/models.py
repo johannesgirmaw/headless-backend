@@ -8,6 +8,7 @@ from django.db import models
 from django.core.validators import RegexValidator
 from apps.accounts.models import Account
 from apps.organizations.models import Organization
+import uuid
 
 
 class UserManager(BaseUserManager):
@@ -47,15 +48,15 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
 
-    # User identification
+    # Platform identifier (human-friendly, unique)
+    def generate_user_id() -> str:
+        return f"USR-{uuid.uuid4().hex[:8].upper()}"
+
     user_id = models.CharField(
-        max_length=50,
+        max_length=32,
         unique=True,
-        validators=[RegexValidator(
-            regex=r'^[a-zA-Z0-9_-]+$',
-            message='User ID can only contain letters, numbers, underscores, and hyphens.'
-        )],
-        help_text="Unique identifier for the user"
+        default=generate_user_id,
+        help_text="Human-friendly unique identifier (auto-generated if omitted)",
     )
 
     # Personal information
@@ -102,7 +103,7 @@ class User(AbstractUser):
 
     # Set email as the USERNAME_FIELD
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['user_id', 'first_name', 'last_name']
+    REQUIRED_FIELDS = ['first_name', 'last_name']
 
     # Custom manager
     objects = UserManager()
@@ -131,12 +132,34 @@ class User(AbstractUser):
     @property
     def effective_timezone(self):
         """Return user timezone or fallback to organization/account timezone."""
-        return self.timezone or self.organization.effective_timezone
+        if self.timezone:
+            return self.timezone
+        if getattr(self, 'organization', None):
+            # organization may be null on some users
+            tz = getattr(self.organization, 'effective_timezone', None)
+            if tz:
+                return tz
+        if getattr(self, 'account', None):
+            # optional: fallback to account if available
+            tz = getattr(self.account, 'effective_timezone', None)
+            if tz:
+                return tz
+        return None
 
     @property
     def effective_language(self):
         """Return user language or fallback to organization/account language."""
-        return self.language or self.organization.effective_language
+        if self.language:
+            return self.language
+        if getattr(self, 'organization', None):
+            lang = getattr(self.organization, 'effective_language', None)
+            if lang:
+                return lang
+        if getattr(self, 'account', None):
+            lang = getattr(self.account, 'effective_language', None)
+            if lang:
+                return lang
+        return None
 
     def get_preference(self, preference_name, default=None):
         """Get a user preference value."""

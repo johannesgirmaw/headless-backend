@@ -19,6 +19,11 @@ class UserSerializer(serializers.ModelSerializer):
     effective_timezone = serializers.ReadOnlyField()
     effective_language = serializers.ReadOnlyField()
 
+    # RBAC fields
+    permissions = serializers.SerializerMethodField()
+    roles = serializers.SerializerMethodField()
+    groups = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -51,6 +56,9 @@ class UserSerializer(serializers.ModelSerializer):
             'is_superuser',
             'date_joined',
             'last_login',
+            'permissions',
+            'roles',
+            'groups',
         ]
         read_only_fields = [
             'id',
@@ -62,6 +70,9 @@ class UserSerializer(serializers.ModelSerializer):
             'last_login',
             'last_login_ip',
             'last_login_location',
+            'permissions',
+            'roles',
+            'groups',
         ]
         extra_kwargs = {
             'password': {'write_only': True},
@@ -120,6 +131,30 @@ class UserSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+    def get_permissions(self, obj):
+        """Get all permissions for the user."""
+        from apps.common.rbac_manager import get_rbac_manager
+
+        organization_id = self.context.get('organization_id')
+        rbac_manager = get_rbac_manager(obj)
+        return list(rbac_manager.get_user_permissions(organization_id))
+
+    def get_roles(self, obj):
+        """Get all roles for the user."""
+        from apps.common.rbac_manager import get_rbac_manager
+
+        organization_id = self.context.get('organization_id')
+        rbac_manager = get_rbac_manager(obj)
+        return rbac_manager.get_user_roles(organization_id)
+
+    def get_groups(self, obj):
+        """Get all groups for the user."""
+        from apps.common.rbac_manager import get_rbac_manager
+
+        organization_id = self.context.get('organization_id')
+        rbac_manager = get_rbac_manager(obj)
+        return rbac_manager.get_user_groups(organization_id)
 
 
 class UserCreateSerializer(UserSerializer):

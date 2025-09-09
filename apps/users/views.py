@@ -99,11 +99,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Set the created_by field when creating a new user."""
-        serializer.save(created_by=self.request.user)
+        # User model does not support created_by; avoid passing unsupported kwargs
+        serializer.save()
 
     def perform_update(self, serializer):
         """Set the updated_by field when updating a user."""
-        serializer.save(updated_by=self.request.user)
+        # User model does not support updated_by; avoid passing unsupported kwargs
+        serializer.save()
 
     def perform_destroy(self, instance):
         """Perform soft delete instead of hard delete."""

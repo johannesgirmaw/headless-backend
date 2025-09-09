@@ -209,7 +209,7 @@ services:
     environment:
       - DEBUG=False
       - SECRET_KEY=your-super-secret-key-change-in-production
-      - DATABASE_URL=postgresql://postgres:postgres_password@db:5432/headless_backend_db
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/headless_backend_db
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
@@ -238,7 +238,7 @@ services:
     environment:
       - DEBUG=False
       - SECRET_KEY=your-super-secret-key-change-in-production
-      - DATABASE_URL=postgresql://postgres:postgres_password@db:5432/headless_backend_db
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/headless_backend_db
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
@@ -258,7 +258,7 @@ services:
     environment:
       - DEBUG=False
       - SECRET_KEY=your-super-secret-key-change-in-production
-      - DATABASE_URL=postgresql://postgres:postgres_password@db:5432/headless_backend_db
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/headless_backend_db
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
