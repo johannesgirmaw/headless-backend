@@ -10,14 +10,18 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import Q
 
-from apps.organizations.models import Organization
+from apps.organizations.models import Organization, Subscription
 from apps.organizations.serializers import (
     OrganizationSerializer,
     OrganizationCreateSerializer,
     OrganizationUpdateSerializer,
     OrganizationListSerializer,
     OrganizationDetailSerializer,
+    SubscriptionSerializer,
+    SubscriptionCreateSerializer,
+    SubscriptionUpdateSerializer,
 )
+from apps.common.rbac_permissions import OrganizationPermission
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -230,3 +234,63 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             'inactive_organizations': inactive_organizations,
             'suspended_organizations': suspended_organizations,
         })
+
+
+class SubscriptionViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for organization-scoped Subscriptions.
+    Endpoints:
+    - GET /api/v1/organizations/{organization_id}/subscriptions
+    - POST /api/v1/organizations/{organization_id}/subscriptions
+    - GET /api/v1/organizations/{organization_id}/subscriptions/{id}
+    - PUT /api/v1/organizations/{organization_id}/subscriptions/{id}
+    - DELETE /api/v1/organizations/{organization_id}/subscriptions/{id}
+    """
+
+    queryset = Subscription.objects.all()
+    permission_classes = [permissions.IsAuthenticated, OrganizationPermission]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['status', 'product_id']
+    search_fields = ['product_id', 'status']
+    ordering_fields = ['created_at', 'updated_at', 'start_date', 'end_date']
+    ordering = ['-created_at']
+
+    def get_permissions(self):
+        # Map actions to organization-scoped permissions
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated(), OrganizationPermission(['subscriptions_read'])]
+        elif self.action in ['create']:
+            return [permissions.IsAuthenticated(), OrganizationPermission(['subscriptions_create'])]
+        elif self.action in ['update', 'partial_update']:
+            return [permissions.IsAuthenticated(), OrganizationPermission(['subscriptions_update'])]
+        elif self.action in ['destroy']:
+            return [permissions.IsAuthenticated(), OrganizationPermission(['subscriptions_delete'])]
+        return [perm() for perm in self.permission_classes]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        organization_id = self.kwargs.get('organization_id')
+        if organization_id:
+            qs = qs.filter(organization_id=organization_id)
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+        return qs
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return SubscriptionCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return SubscriptionUpdateSerializer
+        return SubscriptionSerializer
+
+    def perform_create(self, serializer):
+        organization_id = self.kwargs.get('organization_id')
+        serializer.save(organization_id=organization_id,
+                        created_by=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save(updated_by=self.request.user)
+
+    def perform_destroy(self, instance):
+        instance.soft_delete(user=self.request.user)

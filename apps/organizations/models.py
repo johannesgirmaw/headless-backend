@@ -134,3 +134,44 @@ class Organization(BaseModel):
     def can_add_team(self):
         """Check if a new team can be added to this organization."""
         return self.get_team_count() < self.max_teams
+
+
+class Subscription(BaseModel):
+    """
+    Subscription for an organization to a product.
+    Tracks lifecycle and plan configuration.
+    """
+
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('suspended', 'Suspended'),
+        ('expired', 'Expired'),
+    ]
+
+    # Parent organization
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='subscriptions'
+    )
+
+    # Product reference (external/catalog id)
+    product_id = models.PositiveIntegerField()
+
+    # Dates
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    # Status and configuration
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='active')
+    plan_configuration = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        db_table = 'organization_subscriptions'
+        verbose_name = 'Subscription'
+        verbose_name_plural = 'Subscriptions'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Subscription {self.product_id} for {self.organization.organization_name} ({self.status})"

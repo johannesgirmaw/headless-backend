@@ -4,7 +4,7 @@ Handles serialization and validation of Organization data.
 """
 
 from rest_framework import serializers
-from apps.organizations.models import Organization
+from apps.organizations.models import Organization, Subscription
 from apps.accounts.models import Account
 
 
@@ -217,3 +217,52 @@ class OrganizationDetailSerializer(OrganizationSerializer):
             'company_email': obj.account.company_email,
             'subscription_status': obj.account.subscription_status,
         }
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    """Serializer for Subscription model with API field mapping."""
+
+    subscriptionId = serializers.IntegerField(source='id', read_only=True)
+    organizationId = serializers.SerializerMethodField(read_only=True)
+    productId = serializers.IntegerField(source='product_id')
+    startDate = serializers.DateField(source='start_date')
+    endDate = serializers.DateField(source='end_date')
+    status = serializers.CharField()
+    planConfiguration = serializers.JSONField(source='plan_configuration')
+    createdAt = serializers.DateTimeField(source='created_at', read_only=True)
+    updatedAt = serializers.DateTimeField(source='updated_at', read_only=True)
+
+    class Meta:
+        model = Subscription
+        fields = [
+            'subscriptionId', 'organizationId', 'productId', 'startDate', 'endDate',
+            'status', 'planConfiguration', 'createdAt', 'updatedAt'
+        ]
+
+    def get_organizationId(self, obj):
+        return obj.organization_id
+
+    def validate(self, attrs):
+        # date order validation
+        start = attrs.get('start_date')
+        end = attrs.get('end_date')
+        if start and end and end < start:
+            raise serializers.ValidationError(
+                'endDate must be after startDate')
+        return attrs
+
+
+class SubscriptionCreateSerializer(SubscriptionSerializer):
+    """Serializer for creating subscription (organization comes from URL)."""
+
+    class Meta(SubscriptionSerializer.Meta):
+        read_only_fields = ['subscriptionId',
+                            'organizationId', 'createdAt', 'updatedAt']
+
+
+class SubscriptionUpdateSerializer(SubscriptionSerializer):
+    """Serializer for updating subscription."""
+
+    class Meta(SubscriptionSerializer.Meta):
+        read_only_fields = ['subscriptionId', 'organizationId',
+                            'productId', 'startDate', 'createdAt', 'updatedAt']
